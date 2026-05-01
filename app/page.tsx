@@ -85,7 +85,7 @@ Because: [one sentence]`
 // ─────────────────────────────────────────────────────────────────────────────
 // API
 // ─────────────────────────────────────────────────────────────────────────────
-async function callClaude(systemPrompt, userContent) {
+async function callClaude(systemPrompt: string, userContent: string) {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
