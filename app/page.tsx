@@ -56,7 +56,10 @@ const WORKSTREAM_PROMPT = (
   diagnosis: string,
   decision: string,
   override: string = ""
-) => withDecisionLock(decision,
+) =>
+  withDecisionLock(
+    decision,
+    `You are the Weraki Strategy Engine. Build case workstreams.
 ${override ? `\nPARTNER INSTRUCTION: ${override}\n` : ""}
 DIAGNOSIS:
 ${diagnosis}
@@ -74,10 +77,10 @@ Key question: [single hypothesis-generating question]
 Why this matters: [link to diagnosis finding]
 Owner: [who runs this — role, not name]
 Timeline: [weeks]
-
 **DECISION LINK**
 Supports: [Option A / B / Both]
-Because: [one sentence]`);
+Because: [one sentence]`
+  );
 
 // ─────────────────────────────────────────────────────────────────────────────
 // API
