@@ -1,155 +1,230 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import type { CSSProperties } from "react";
 
-// ─────────────────────────────────────────
-// TYPES
-// ─────────────────────────────────────────
-type CaseData = Record<string, string | undefined>;
-
-type Workstream = {
-  num: string;
-  name: string;
-  objective: string;
-  keyQuestion: string;
-  whyMatters: string;
-  owner: string;
-  timeline: string;
-  supports: string;
-  because: string;
+const box: CSSProperties = {
+  border: "1px solid #ddd",
+  borderRadius: 12,
+  padding: 20,
+  marginTop: 18,
+  background: "#fff",
 };
 
-// ─────────────────────────────────────────
-// BASIC STYLES (FIX TYPESCRIPT ERROR)
-// ─────────────────────────────────────────
-const inp: CSSProperties = {
+const label: CSSProperties = {
+  display: "block",
+  fontSize: 12,
+  marginBottom: 8,
+  color: "#666",
+  fontWeight: 600,
+};
+
+const input: CSSProperties = {
   width: "100%",
-  padding: "10px 14px",
-  background: "rgba(255,255,255,0.03)",
-  border: "1px solid rgba(255,255,255,0.07)",
-  borderRadius: 5,
-  color: "#d4cfc8",
-  fontSize: 13,
-  outline: "none",
+  padding: "12px 14px",
+  border: "1px solid #ddd",
+  borderRadius: 8,
+  fontSize: 15,
   boxSizing: "border-box",
 };
 
-const lbl: CSSProperties = {
-  fontSize: 10,
-  color: "#8a8480",
-  marginBottom: 6,
-};
+function extractSection(text: string, title: string) {
+  const regex = new RegExp(`##\\s*${title}[\\s\\S]*?(?=\\n##\\s*\\d+\\.|$)`, "i");
+  const match = text.match(regex);
+  return match ? match[0].trim() : "";
+}
 
-// ─────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────
+function extractWorkstreams(text: string) {
+  const section = extractSection(text, "6\\. WORKSTREAMS");
+  const matches = section.match(/WORKSTREAM\s+\d+:[\s\S]*?(?=WORKSTREAM\s+\d+:|$)/gi);
+  return matches || [];
+}
+
 export default function Page() {
-  // FORM
-  const [form, setForm] = useState({
-    sector: "",
-    scale: "",
-    brief: "",
-  });
+  const [caseInput, setCaseInput] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // STATE
-  const [caseData, setCaseData] = useState<CaseData>({});
-  const [wsCards, setWsCards] = useState<Workstream[]>([]);
-  const [loadingTab, setLoadingTab] = useState<string | null>(null);
-  const [error, setError] = useState<string>("");
+  const reframe = extractSection(result, "1\\. REFRAME");
+  const mismatch = extractSection(result, "2\\. MISMATCH");
+  const modelAudit = extractSection(result, "3\\. MODEL AUDIT");
+  const failurePath = extractSection(result, "4\\. FAILURE PATH");
+  const decision = extractSection(result, "5\\. THE DECISION");
+  const workstreams = extractWorkstreams(result);
 
-  // ───────────────────────────────────────
-  // MOCK API (để tránh lỗi fetch lúc build)
-  // ───────────────────────────────────────
-  const fakeWorkstreams = (): Workstream[] => [
-    {
-      num: "1",
-      name: "REVENUE BREAK",
-      objective: "Find revenue leak",
-      keyQuestion: "Where is money lost?",
-      whyMatters: "Core mismatch",
-      owner: "CEO",
-      timeline: "2w",
-      supports: "A",
-      because: "Fix revenue first",
-    },
-  ];
+  async function runCase() {
+    setLoading(true);
+    setError("");
+    setResult("");
 
-  // ───────────────────────────────────────
-  // ACTION
-  // ───────────────────────────────────────
-  const generateWorkstreams = () => {
-    setLoadingTab("workstreams");
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          caseInput,
+        }),
+      });
 
-    setTimeout(() => {
-      setWsCards(fakeWorkstreams());
-      setCaseData((p) => ({ ...p, workstreams: "done" }));
-      setLoadingTab(null);
-    }, 800);
-  };
+      const data = await res.json();
 
-  const handleTabClick = (tabId: string) => {
-    if (tabId === "workstreams" && !caseData.workstreams) {
-      generateWorkstreams();
+      if (!res.ok) {
+        setError(data.error || "Request failed.");
+        return;
+      }
+
+      setResult(data.text || "");
+    } catch {
+      setError("Cannot connect to AI API.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
-  // ───────────────────────────────────────
-  // UI
-  // ───────────────────────────────────────
   return (
-    <div style={{ padding: 40 }}>
-      <h2>Weraki Engine (Clean Build)</h2>
+    <main
+      style={{
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: "48px 24px",
+        fontFamily: "Georgia, serif",
+        background: "#faf8f3",
+        minHeight: "100vh",
+      }}
+    >
+      <h1 style={{ fontSize: 36, marginBottom: 8 }}>Weraki Case Engine</h1>
+      <p style={{ color: "#666", marginBottom: 32 }}>
+        Diagnosis → Decision → Workstreams → BA Tasks
+      </p>
 
-      {/* INPUT */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={lbl}>Sector</label>
-        <select
-          value={form.sector}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, sector: e.target.value }))
-          }
-          style={inp}
-        >
-          <option value="">Select...</option>
-          <option value="retail">Retail</option>
-        </select>
-      </div>
-
-      <div style={{ marginBottom: 20 }}>
-        <label style={lbl}>Problem</label>
+      <section style={box}>
+        <label style={label}>CLIENT CASE INPUT</label>
         <textarea
-          value={form.brief}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, brief: e.target.value }))
-          }
-          style={{ ...inp, minHeight: 80 }}
-        />
-      </div>
-
-      <button onClick={() => handleTabClick("workstreams")}>
-        Generate Workstreams
-      </button>
-
-      {/* LOADING */}
-      {loadingTab && <p>Loading...</p>}
-
-      {/* RESULT */}
-      {wsCards.map((ws) => (
-        <div
-          key={ws.num}
+          value={caseInput}
+          onChange={(e) => setCaseInput(e.target.value)}
+          placeholder="Example: Japanese CVS chain wants to enter Vietnam. Client asks whether the market is attractive and how to structure the feasibility study..."
           style={{
-            border: "1px solid #333",
-            padding: 12,
-            marginTop: 12,
+            ...input,
+            minHeight: 160,
+            resize: "vertical",
+            lineHeight: 1.6,
+          }}
+        />
+
+        <button
+          onClick={runCase}
+          disabled={loading || caseInput.trim().length < 20}
+          style={{
+            marginTop: 16,
+            padding: "12px 22px",
+            borderRadius: 8,
+            border: "none",
+            background:
+              loading || caseInput.trim().length < 20 ? "#ccc" : "#111",
+            color: "#fff",
+            cursor:
+              loading || caseInput.trim().length < 20 ? "not-allowed" : "pointer",
+            fontWeight: 700,
           }}
         >
-          <b>{ws.name}</b>
-          <div>{ws.objective}</div>
-        </div>
-      ))}
+          {loading ? "Running case..." : "Run Weraki Diagnosis"}
+        </button>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+        {error && (
+          <div style={{ marginTop: 12, color: "red", fontSize: 14 }}>
+            {error}
+          </div>
+        )}
+      </section>
+
+      {result && (
+        <>
+          <section style={box}>
+            <h2>1. Reframe</h2>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {reframe}
+            </pre>
+          </section>
+
+          <section style={box}>
+            <h2>2. Mismatch</h2>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {mismatch}
+            </pre>
+          </section>
+
+          <section style={box}>
+            <h2>3. Model Audit</h2>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {modelAudit}
+            </pre>
+          </section>
+
+          <section style={box}>
+            <h2>4. Failure Path</h2>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {failurePath}
+            </pre>
+          </section>
+
+          <section style={{ ...box, border: "2px solid #111" }}>
+            <h2>5. The Decision</h2>
+            <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+              {decision}
+            </pre>
+          </section>
+
+          <section style={box}>
+            <h2>6. Workstreams + BA Tasks</h2>
+
+            {workstreams.length > 0 ? (
+              workstreams.map((ws, index) => (
+                <div
+                  key={index}
+                  style={{
+                    border: "1px solid #ddd",
+                    borderRadius: 10,
+                    padding: 16,
+                    marginTop: 14,
+                    background: "#fcfcfc",
+                  }}
+                >
+                  <pre
+                    style={{
+                      whiteSpace: "pre-wrap",
+                      fontFamily: "inherit",
+                      margin: 0,
+                    }}
+                  >
+                    {ws}
+                  </pre>
+                </div>
+              ))
+            ) : (
+              <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+                {extractSection(result, "6\\. WORKSTREAMS")}
+              </pre>
+            )}
+          </section>
+
+          <section style={{ ...box, background: "#111", color: "#fff" }}>
+            <h2>Raw Output</h2>
+            <pre
+              style={{
+                whiteSpace: "pre-wrap",
+                fontFamily: "monospace",
+                fontSize: 13,
+                lineHeight: 1.6,
+              }}
+            >
+              {result}
+            </pre>
+          </section>
+        </>
+      )}
+    </main>
   );
 }
