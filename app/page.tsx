@@ -103,7 +103,7 @@ async function callClaude(systemPrompt: string, userContent: string) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PARSE
 // ─────────────────────────────────────────────────────────────────────────────
-function extractSection(text, key) {
+function extractSection(text: string, key: string) {
   const marker = `**${key}**`;
   const start = text.indexOf(marker);
   if (start === -1) return "";
