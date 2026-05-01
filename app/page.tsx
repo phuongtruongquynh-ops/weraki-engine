@@ -52,7 +52,11 @@ Every single output block MUST end with:
 Supports: [Option A / Option B / Both]
 Because: [one sentence connecting this output to the decision trade-off]`;
 
-const WORKSTREAM_PROMPT = (diagnosis, decision, override = "") => withDecisionLock(decision, `You are the Weraki Strategy Engine. Build case workstreams.
+const WORKSTREAM_PROMPT = (
+  diagnosis: string,
+  decision: string,
+  override: string = ""
+) => withDecisionLock(decision,
 ${override ? `\nPARTNER INSTRUCTION: ${override}\n` : ""}
 DIAGNOSIS:
 ${diagnosis}
