@@ -112,10 +112,10 @@ function extractSection(text: string, key: string) {
   return (nextBold === -1 ? after : after.slice(0, nextBold)).trim();
 }
 
-function parseDiagnosis(text) {
-  return ["REFRAME","MISMATCH","MODEL AUDIT","FAILURE PATH","THE DECISION"]
-    .map(k => ({ key: k, content: extractSection(text, k) }))
-    .filter(s => s.content);
+function parseDiagnosis(text: string) {
+  return ["REFRAME", "MISMATCH", "MODEL AUDIT", "FAILURE PATH", "THE DECISION"]
+    .map((k: string) => ({ key: k, content: extractSection(text, k) }))
+    .filter((s: { key: string; content: string }) => s.content);
 }
 
 function extractDecision(text) { return extractSection(text, "THE DECISION") || text; }
@@ -131,8 +131,8 @@ function parseDecisionOptions(text) {
   };
 }
 
-function parseWorkstreams(text) {
-  const results = [];
+function parseWorkstreams(text: string) {
+ const results: any[] = [];
   const regex = /\*\*WORKSTREAM\s+(\d+):\s*([^*]+)\*\*/gi;
   let match;
   while ((match = regex.exec(text)) !== null) {
