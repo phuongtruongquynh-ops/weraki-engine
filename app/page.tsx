@@ -736,10 +736,10 @@ export default function WerakiEngine() {
   const [decisionOptions, setDecisionOptions] = useState(null);
 
   // ── Case data & workstreams
-  const [caseData, setCaseData]   = useState({});   // tabId → raw string
+const [caseData, setCaseData] = useState<Record<string, any>>({});   // tabId → raw string
   const [wsCards, setWsCards]     = useState([]);
   const [wsVisible, setWsVisible] = useState(false);
-  const [loadingTab, setLoadingTab] = useState(null);
+  const [loadingTab, setLoadingTab] = useState<string | null>(null);
   const [error, setError]         = useState("");
 
   // ── Partner layer
