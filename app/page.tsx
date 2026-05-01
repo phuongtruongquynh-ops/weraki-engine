@@ -97,7 +97,7 @@ async function callClaude(systemPrompt: string, userContent: string) {
     }),
   });
   const data = await res.json();
-  return data.content?.map(b => b.text || "").join("") || "";
+  return data.content?.map((b: any) => b.text || "").join("") || "";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
