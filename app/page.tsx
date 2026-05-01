@@ -39,8 +39,7 @@ They must choose:
 The trade-off: [one sentence]
 
 TONE: Sharp. Direct. No filler. No hedging. Only clarity.`;
-
-const withDecisionLock = (decisionText, modulePrompt) =>
+const withDecisionLock = (decisionText: string, modulePrompt: string) =>
   `${modulePrompt}
 ═══════════════════════════════
 DECISION LOCK — MANDATORY
